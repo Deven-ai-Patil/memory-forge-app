@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client, ClientEvent, EventType, EventStatus } from '@/types';
 import { toast } from 'sonner';
@@ -21,62 +20,9 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const SAMPLE_CLIENTS: Client[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    phone: '555-123-4567',
-    personalFacts: 'Loves hiking, has two kids, prefers morning meetings, coffee enthusiast.'
-  },
-  {
-    id: '2',
-    name: 'Alex Chen',
-    email: 'alex@example.com',
-    phone: '555-987-6543',
-    personalFacts: 'Golf player, celebrating 10 years in business this July, wine collector.'
-  },
-  {
-    id: '3',
-    name: 'Michael Rodriguez',
-    email: 'michael@example.com',
-    phone: '555-333-2222',
-    personalFacts: 'Dog lover, interested in sustainability, planning to expand business next quarter.'
-  }
-];
-
-const SAMPLE_EVENTS: ClientEvent[] = [
-  {
-    id: '1',
-    clientId: '1',
-    clientName: 'Sarah Johnson',
-    eventType: 'Promise',
-    description: 'Send proposal draft',
-    reminderDate: new Date(),
-    notes: 'Include pricing options and timeline estimates',
-    status: 'Pending'
-  },
-  {
-    id: '2',
-    clientId: '2',
-    clientName: 'Alex Chen',
-    eventType: 'Meeting',
-    description: 'Quarterly review',
-    reminderDate: new Date(Date.now() + 86400000), // tomorrow
-    notes: 'Prepare slides with Q2 results',
-    status: 'Pending'
-  },
-  {
-    id: '3',
-    clientId: '3',
-    clientName: 'Michael Rodriguez',
-    eventType: 'Birthday',
-    description: 'Birthday celebration',
-    reminderDate: new Date(Date.now() - 86400000), // yesterday
-    notes: 'Consider sending a small gift',
-    status: 'Pending'
-  }
-];
+// Initialize with empty arrays instead of sample data
+const SAMPLE_CLIENTS: Client[] = [];
+const SAMPLE_EVENTS: ClientEvent[] = [];
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clients, setClients] = useState<Client[]>(SAMPLE_CLIENTS);
