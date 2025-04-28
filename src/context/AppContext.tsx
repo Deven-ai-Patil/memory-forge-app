@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client, ClientEvent, EventType, EventStatus } from '@/types';
 import { toast } from 'sonner';
@@ -20,15 +21,22 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Initialize with empty arrays instead of sample data
-const SAMPLE_CLIENTS: Client[] = [];
-const SAMPLE_EVENTS: ClientEvent[] = [];
+// Initialize with empty arrays
+const EMPTY_CLIENTS: Client[] = [];
+const EMPTY_EVENTS: ClientEvent[] = [];
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [clients, setClients] = useState<Client[]>(SAMPLE_CLIENTS);
-  const [events, setEvents] = useState<ClientEvent[]>(SAMPLE_EVENTS);
+  // Initialize state with empty arrays, completely clearing any demo data
+  const [clients, setClients] = useState<Client[]>(EMPTY_CLIENTS);
+  const [events, setEvents] = useState<ClientEvent[]>(EMPTY_EVENTS);
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
   const [reminderTime, setReminderTime] = useState<string>("09:00");
+
+  // Clear localStorage on first load to ensure no persistence of demo data
+  useEffect(() => {
+    localStorage.removeItem('clients');
+    localStorage.removeItem('events');
+  }, []);
 
   const addClient = (clientData: Omit<Client, 'id'>) => {
     const newClient = {
