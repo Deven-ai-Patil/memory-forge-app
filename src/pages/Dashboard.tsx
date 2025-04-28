@@ -3,10 +3,41 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import EventCard from '@/components/EventCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
-  const { events, markEventAsDone } = useApp();
+  const { events, clients, markEventAsDone } = useApp();
   const [activeTab, setActiveTab] = useState<'today' | 'all'>('today');
+  
+  // If there are no clients, show the welcome screen
+  if (clients.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
+        <div className="max-w-md">
+          <h1 className="text-2xl font-bold mb-4">
+            Welcome to Memory Architect! 👋
+          </h1>
+          
+          <p className="text-gray-600 mb-8">
+            Never forget a client promise again. Start by adding your most important client relationship.
+          </p>
+          
+          <Link to="/add-client">
+            <Button size="lg" className="w-full">
+              <Plus className="mr-2 h-5 w-5" />
+              Add Your First Client
+            </Button>
+          </Link>
+          
+          <p className="text-sm text-gray-500 mt-6">
+            Takes less than a minute to get started
+          </p>
+        </div>
+      </div>
+    );
+  }
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
