@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client, ClientEvent, EventType, EventStatus } from '@/types';
 import { toast } from 'sonner';
+import { initializeNotifications, scheduleDailyReminder, cancelAllNotifications } from '@/services/NotificationService';
 
 interface AppContextType {
   clients: Client[];
@@ -21,22 +22,70 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Initialize with empty arrays
-const EMPTY_CLIENTS: Client[] = [];
-const EMPTY_EVENTS: ClientEvent[] = [];
+// Key names for localStorage
+const CLIENTS_STORAGE_KEY = 'memoryArchitect_clients';
+const EVENTS_STORAGE_KEY = 'memoryArchitect_events';
+const NOTIFICATIONS_ENABLED_KEY = 'memoryArchitect_notificationsEnabled';
+const REMINDER_TIME_KEY = 'memoryArchitect_reminderTime';
+
+// Initialize with empty arrays or load from localStorage
+const getInitialClients = (): Client[] => {
+  const savedClients = localStorage.getItem(CLIENTS_STORAGE_KEY);
+  return savedClients ? JSON.parse(savedClients) : [];
+};
+
+const getInitialEvents = (): ClientEvent[] => {
+  const savedEvents = localStorage.getItem(EVENTS_STORAGE_KEY);
+  return savedEvents ? JSON.parse(savedEvents) : [];
+};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state with empty arrays, completely clearing any demo data
-  const [clients, setClients] = useState<Client[]>(EMPTY_CLIENTS);
-  const [events, setEvents] = useState<ClientEvent[]>(EMPTY_EVENTS);
-  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
-  const [reminderTime, setReminderTime] = useState<string>("09:00");
+  const [clients, setClients] = useState<Client[]>(getInitialClients);
+  const [events, setEvents] = useState<ClientEvent[]>(getInitialEvents);
+  
+  // Get stored notification preferences or use defaults
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem(NOTIFICATIONS_ENABLED_KEY);
+    return saved ? JSON.parse(saved) : true;
+  });
+  
+  const [reminderTime, setReminderTime] = useState<string>(() => {
+    const saved = localStorage.getItem(REMINDER_TIME_KEY);
+    return saved || "09:00";
+  });
 
-  // Clear localStorage on first load to ensure no persistence of demo data
+  // Initialize notifications on first load
   useEffect(() => {
-    localStorage.removeItem('clients');
-    localStorage.removeItem('events');
+    initializeNotifications().then(granted => {
+      if (!granted) {
+        setNotificationsEnabled(false);
+        localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, JSON.stringify(false));
+      }
+    });
   }, []);
+
+  // Update notifications when settings change
+  useEffect(() => {
+    if (notificationsEnabled) {
+      scheduleDailyReminder(reminderTime);
+    } else {
+      cancelAllNotifications();
+    }
+    
+    // Save preferences to localStorage
+    localStorage.setItem(NOTIFICATIONS_ENABLED_KEY, JSON.stringify(notificationsEnabled));
+    localStorage.setItem(REMINDER_TIME_KEY, reminderTime);
+  }, [notificationsEnabled, reminderTime]);
+
+  // Save clients to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
+  }, [clients]);
+  
+  // Save events to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
+  }, [events]);
 
   const addClient = (clientData: Omit<Client, 'id'>) => {
     const newClient = {
