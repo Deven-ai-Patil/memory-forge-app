@@ -17,6 +17,7 @@ export interface ClientEvent {
   eventType: EventType;
   description: string;
   reminderDate: Date;
+  reminderTime?: string; // Format: "HH:MM" (24-hour format)
   notes?: string;
   status: EventStatus;
 }

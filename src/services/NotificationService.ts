@@ -57,12 +57,17 @@ export const scheduleEventReminder = async (event: ClientEvent) => {
     const eventId = parseInt(event.id, 10) % 100000; // Convert string ID to number (mod to avoid large IDs)
     const reminderDate = new Date(event.reminderDate);
     
-    // Schedule notification 1 hour before the event
-    const notificationDate = new Date(reminderDate);
-    notificationDate.setHours(notificationDate.getHours() - 1);
+    // If specific time is provided, use it
+    if (event.reminderTime) {
+      const [hours, minutes] = event.reminderTime.split(':').map(Number);
+      reminderDate.setHours(hours, minutes, 0, 0);
+    } else {
+      // Default to 1 hour before the event if no specific time
+      reminderDate.setHours(reminderDate.getHours() - 1);
+    }
     
     // If the reminder time has already passed, don't schedule
-    if (notificationDate < new Date()) {
+    if (reminderDate < new Date()) {
       return false;
     }
     
@@ -98,7 +103,7 @@ export const scheduleEventReminder = async (event: ClientEvent) => {
           id: 10000 + eventId, // Use offset to avoid ID conflicts with daily reminders
           title,
           body,
-          schedule: { at: notificationDate }
+          schedule: { at: reminderDate }
         }
       ]
     });

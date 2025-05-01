@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ClientsPage from "./pages/ClientsPage";
 import ClientDetailPage from "./pages/ClientDetailPage";
 import AddMemoryPage from "./pages/AddMemoryPage";
+import EditMemoryPage from "./pages/EditMemoryPage";
 import AddClientPage from "./pages/AddClientPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -54,6 +55,7 @@ const App = () => {
                 <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/clients/:id" element={<ClientDetailPage />} />
                 <Route path="/add" element={<AddMemoryPage />} />
+                <Route path="/edit/:id" element={<EditMemoryPage />} />
                 <Route path="/add-client" element={<AddClientPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="*" element={<NotFound />} />

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -14,22 +14,30 @@ import { EventType } from '@/types';
 import { cn } from '@/lib/utils';
 import TimeSelect from '@/components/TimeSelect';
 
-const AddMemoryPage: React.FC = () => {
+const EditMemoryPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { clients, addEvent } = useApp();
+  const { id } = useParams<{ id: string }>();
+  const { clients, events, updateEvent } = useApp();
   
-  const queryParams = new URLSearchParams(location.search);
-  const preselectedClientId = queryParams.get('clientId');
+  // Find the event to edit
+  const event = events.find(e => e.id === id);
   
   const [values, setValues] = useState({
-    clientId: preselectedClientId || '',
-    eventType: 'Promise' as EventType,
-    description: '',
-    reminderDate: new Date(),
-    reminderTime: '09:00',
-    notes: ''
+    clientId: event?.clientId || '',
+    eventType: event?.eventType || 'Promise' as EventType,
+    description: event?.description || '',
+    reminderDate: event?.reminderDate ? new Date(event.reminderDate) : new Date(),
+    reminderTime: event?.reminderTime || '09:00',
+    notes: event?.notes || '',
+    status: event?.status || 'Pending'
   });
+  
+  // If event not found, redirect back
+  useEffect(() => {
+    if (!event) {
+      navigate('/');
+    }
+  }, [event, navigate]);
   
   const handleChange = (field: string, value: any) => {
     setValues({ ...values, [field]: value });
@@ -38,10 +46,13 @@ const AddMemoryPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!event) return;
+    
     const selectedClient = clients.find(client => client.id === values.clientId);
     
     if (selectedClient) {
-      addEvent({
+      updateEvent({
+        id: event.id,
         clientId: selectedClient.id,
         clientName: selectedClient.name,
         eventType: values.eventType,
@@ -49,14 +60,18 @@ const AddMemoryPage: React.FC = () => {
         reminderDate: values.reminderDate,
         reminderTime: values.reminderTime,
         notes: values.notes,
-        status: 'Pending'
+        status: values.status
       });
       
-      navigate('/');
+      navigate(`/clients/${selectedClient.id}`);
     }
   };
   
   const isFormValid = values.clientId && values.description && values.reminderDate;
+  
+  if (!event) {
+    return null; // Will redirect via the useEffect
+  }
   
   return (
     <div>
@@ -65,7 +80,7 @@ const AddMemoryPage: React.FC = () => {
         Back
       </div>
       
-      <h1 className="text-2xl font-bold mb-6">Add Memory</h1>
+      <h1 className="text-2xl font-bold mb-6">Edit Memory</h1>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
@@ -180,11 +195,11 @@ const AddMemoryPage: React.FC = () => {
           className="w-full py-6"
           disabled={!isFormValid}
         >
-          Save Memory
+          Save Changes
         </Button>
       </form>
     </div>
   );
 };
 
-export default AddMemoryPage;
+export default EditMemoryPage;
