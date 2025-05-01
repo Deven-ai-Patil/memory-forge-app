@@ -1,8 +1,13 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Client, ClientEvent, EventType, EventStatus } from '@/types';
 import { toast } from 'sonner';
-import { initializeNotifications, scheduleDailyReminder, cancelAllNotifications } from '@/services/NotificationService';
+import { 
+  initializeNotifications, 
+  scheduleDailyReminder, 
+  scheduleEventReminder,
+  cancelAllNotifications, 
+  cancelEventNotification 
+} from '@/services/NotificationService';
 
 interface AppContextType {
   clients: Client[];
@@ -77,6 +82,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(REMINDER_TIME_KEY, reminderTime);
   }, [notificationsEnabled, reminderTime]);
 
+  // Schedule notifications for all pending events when notification settings change
+  useEffect(() => {
+    if (notificationsEnabled) {
+      // Schedule notifications for all pending events
+      events.forEach(event => {
+        if (event.status === 'Pending') {
+          scheduleEventReminder(event);
+        }
+      });
+    }
+  }, [notificationsEnabled, events]);
+
   // Save clients to localStorage when they change
   useEffect(() => {
     localStorage.setItem(CLIENTS_STORAGE_KEY, JSON.stringify(clients));
@@ -121,6 +138,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: Date.now().toString()
     };
     setEvents([...events, newEvent]);
+    
+    // Schedule notification for the new event if notifications are enabled
+    if (notificationsEnabled && newEvent.status === 'Pending') {
+      scheduleEventReminder(newEvent);
+    }
+    
     toast.success(`Added new ${eventData.eventType.toLowerCase()}`);
   };
 
@@ -128,12 +151,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setEvents(events.map(event => 
       event.id === updatedEvent.id ? updatedEvent : event
     ));
+    
+    // Update notification if notifications are enabled
+    if (notificationsEnabled) {
+      if (updatedEvent.status === 'Pending') {
+        // Cancel existing notification and create a new one
+        cancelEventNotification(updatedEvent.id);
+        scheduleEventReminder(updatedEvent);
+      } else {
+        // Cancel notification if event is completed
+        cancelEventNotification(updatedEvent.id);
+      }
+    }
+    
     toast.success(`Updated ${updatedEvent.eventType.toLowerCase()}`);
   };
 
   const deleteEvent = (id: string) => {
     const eventToDelete = events.find(event => event.id === id);
     setEvents(events.filter(event => event.id !== id));
+    
+    // Cancel notification for deleted event
+    if (notificationsEnabled && eventToDelete) {
+      cancelEventNotification(id);
+    }
     
     if (eventToDelete) {
       toast.success(`Deleted ${eventToDelete.eventType.toLowerCase()}`);
@@ -144,6 +185,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setEvents(events.map(event => 
       event.id === id ? { ...event, status: 'Done' as EventStatus } : event
     ));
+    
+    // Cancel notification for completed event
+    if (notificationsEnabled) {
+      cancelEventNotification(id);
+    }
+    
     toast.success('Marked as done!');
   };
 
